@@ -22,28 +22,28 @@ app/                  应用源码（已按 streamlit 1.40 做 API 降级，仅�
 - 首次打开需下载约 60–70MB 资产（通常 10–40 秒），之后走浏览器缓存。
 - 页面内的「Streamlit Cloud 备用入口」链接指向原云端版本，两条路互为备份。
 
-## 部署到 Vercel（免费，约 5 分钟）
+## 部署到 Cloudflare Pages（免费，约 5 分钟）
 
-1. **在 GitHub 建仓库**：右上角 ➕ → New repository，名称 `silver-guard-static`，
-   公开或私有都可以（Vercel 免费版支持私有仓），**不要**初始化 README/gitignore。
-2. **推送代码**（在本目录执行）：
+> Vercel 也可用（本仓库的 `vercel.json` 保留），但部分账号会遇到登录限制；
+> Cloudflare Pages 无此问题，且推送后同样自动部署。二选一即可。
 
-   ```bash
-   git remote add origin https://github.com/<你的GitHub用户名>/silver-guard-static.git
-   git push -u origin master
-   ```
+1. **GitHub 仓库已就绪**：`Lyubo7117/silver-guard-static`（已推送，含本页所有文件）。
+2. **导入 Cloudflare Pages**：打开 https://dash.cloudflare.com → 注册/登录（免费）→
+   左侧 **Workers & Pages** → **Create** → **Pages** 标签页 → **Connect to Git**：
+   - 授权 GitHub，选择仓库 `silver-guard-static`
+   - Project name：`silver-guard-static`
+   - Framework preset：**None**
+   - Build command：**留空**
+   - Build output directory：**`/`**
+   - 点 **Save and Deploy**，等 1–2 分钟
+3. 得到 `https://silver-guard-static.pages.dev`（Custom domains 里可换名字）
 
-   > 如果提示分支名问题：GitHub 新建仓库默认分支可能是 `main`，直接 push 即可，
-   > Vercel 导入时选实际推送的分支。
-3. **导入 Vercel**：打开 https://vercel.com → 用 GitHub 账号登录 →
-   **Add New… → Project** → 找到 `silver-guard-static` → **Import**：
-   - Framework Preset：**Other**
-   - Root Directory：`./`（默认）
-   - 其余全部默认，点 **Deploy**
-4. 等 1–2 分钟，得到 `https://silver-guard-static-<随机串>.vercel.app`
-   （Project → Domains 里可以改成更好记的名字）
+以后每次 `git push`，Cloudflare **自动重新部署**。
 
-以后每次 `git push`，Vercel **自动重新部署**，无需手动点更新。
+### 备选：Vercel
+
+https://vercel.com → Add New → Project → Import `silver-guard-static` →
+Framework 选 Other，其余默认 → Deploy。得到 `*.vercel.app`。
 
 ## 本地预览
 
@@ -72,6 +72,6 @@ Pyodide 无法安装该包，故静态版用等效表格渲染）。
   仅上述三处 API 做了等价降级；云端版保持最新 API 不变。
 - 表格为 HTML 渲染，不支持列排序/下载 CSV（原演示亦未使用这些交互）。
 - 多页面导航、实时推送模拟、SOS 告警、处置联动、Plotly 图表均正常。
-- ⚠️ Vercel 的 `*.vercel.app` 域名在部分国内网络下访问不稳定。正式分发前建议
+- ⚠️ Cloudflare Pages 的 `*.pages.dev` 与 Vercel 的 `*.vercel.app` 域名在部分国内网络下访问不稳定。正式分发前建议
   用国内网络（如手机流量）实测；顶栏保留了「Streamlit Cloud 备用入口」链接，
   本地 `python -m http.server` 亦可作为答辩现场的兜底演示方式。
