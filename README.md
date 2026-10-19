@@ -9,6 +9,7 @@ pandas/numpy/plotly 等 28 个 wheel）均已自托管在本仓库的 `vendor/` 
 
 ```
 index.html            入口页（顶部品牌栏 + 加载提示 + 挂载点）
+vercel.json           Vercel 部署配置（wasm 类型头 + 长期缓存）
 vendor/
   stlite.min.js       stlite 运行时（Streamlit 1.40.1 + React 前端）
   static/             前端 chunk 资源
@@ -18,38 +19,36 @@ vendor/
 app/                  应用源码（已按 streamlit 1.40 做 API 降级，仅作存档）
 ```
 
-- 首次打开需下载约 60–70MB 资产（Gitee 国内线路通常 10–40 秒），之后走浏览器缓存。
+- 首次打开需下载约 60–70MB 资产（通常 10–40 秒），之后走浏览器缓存。
 - 页面内的「Streamlit Cloud 备用入口」链接指向原云端版本，两条路互为备份。
 
-## 部署到 Gitee Pages（免费 / 免备案 / 国内可直开）
+## 部署到 Vercel（免费，约 5 分钟）
 
-1. **在 Gitee 建仓库**：右上角 ➕ → 新建仓库，名称建议 `silver-guard-static`，
-   **务必设为公开仓库**（Gitee Pages 免费版要求公开），不要勾选任何初始化文件。
+1. **在 GitHub 建仓库**：右上角 ➕ → New repository，名称 `silver-guard-static`，
+   公开或私有都可以（Vercel 免费版支持私有仓），**不要**初始化 README/gitignore。
 2. **推送代码**（在本目录执行）：
 
    ```bash
-   git init
-   git add -A
-   git commit -m "银发守护概念演示 · 纯前端静态版"
-   git branch -M master
-   git remote add origin https://gitee.com/<你的用户名>/silver-guard-static.git
+   git remote add origin https://github.com/<你的GitHub用户名>/silver-guard-static.git
    git push -u origin master
    ```
 
-   > 如果以前配过 git 代理，先检查并清除：
-   > `git config --global --get-regexp url` 看到 `insteadOf` 规则就
-   > `git config --global --unset url.<xxx>.insteadOf`。
-3. **开启 Pages**：仓库页面 → 服务 → Gitee Pages → 选择分支 `master`、目录 `/`（根目录）→ 开启，等 1–2 分钟部署完成。
-4. **访问地址**：`https://<你的用户名>.gitee.io/silver-guard-static/`
+   > 如果提示分支名问题：GitHub 新建仓库默认分支可能是 `main`，直接 push 即可，
+   > Vercel 导入时选实际推送的分支。
+3. **导入 Vercel**：打开 https://vercel.com → 用 GitHub 账号登录 →
+   **Add New… → Project** → 找到 `silver-guard-static` → **Import**：
+   - Framework Preset：**Other**
+   - Root Directory：`./`（默认）
+   - 其余全部默认，点 **Deploy**
+4. 等 1–2 分钟，得到 `https://silver-guard-static-<随机串>.vercel.app`
+   （Project → Domains 里可以改成更好记的名字）
 
-把演示链接交给评委/老师即可，国内网络直接打开，无需加速器。
+以后每次 `git push`，Vercel **自动重新部署**，无需手动点更新。
 
 ## 本地预览
 
 ```bash
-# 任选一个静态服务器，在 index.html 所在目录执行：
-python -m http.server 8000
-# 打开 http://localhost:8000
+python -m http.server 8000   # 在 index.html 所在目录执行，打开 http://localhost:8000
 ```
 
 ## 修改应用后重新构建
@@ -73,3 +72,6 @@ Pyodide 无法安装该包，故静态版用等效表格渲染）。
   仅上述三处 API 做了等价降级；云端版保持最新 API 不变。
 - 表格为 HTML 渲染，不支持列排序/下载 CSV（原演示亦未使用这些交互）。
 - 多页面导航、实时推送模拟、SOS 告警、处置联动、Plotly 图表均正常。
+- ⚠️ Vercel 的 `*.vercel.app` 域名在部分国内网络下访问不稳定。正式分发前建议
+  用国内网络（如手机流量）实测；顶栏保留了「Streamlit Cloud 备用入口」链接，
+  本地 `python -m http.server` 亦可作为答辩现场的兜底演示方式。
