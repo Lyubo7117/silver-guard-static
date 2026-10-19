@@ -8,16 +8,22 @@ pandas/numpy/plotly 等 28 个 wheel）均已自托管在本仓库的 `vendor/` 
 ## 这个包怎么工作
 
 ```
-index.html            入口页（顶部品牌栏 + 加载提示 + 挂载点）
-vercel.json           Vercel 部署配置（wasm 类型头 + 长期缓存）
-vendor/
-  stlite.min.js       stlite 运行时（Streamlit 1.40.1 + React 前端）
-  static/             前端 chunk 资源
-  pypi/               streamlit / stlite_lib wheel
-  pyodide/            Pyodide v0.26.2 完整发行版 + 所需包 wheel
-  wheelhouse.zip      预置 site-packages（blinker/tenacity/toml/pydeck/plotly/narwhals 等）
-app/                  应用源码（已按 streamlit 1.40 做 API 降级，仅作存档）
+site/                   Cloudflare 部署目录（网站文件都在这里）
+  index.html            入口页（顶部品牌栏 + 加载提示 + 挂载点）
+  _headers              Cloudflare Pages 缓存配置
+  vercel.json           Vercel 备用部署配置
+  vendor/
+    stlite.min.js       stlite 运行时（Streamlit 1.40.1 + React 前端）
+    static/             前端 chunk 资源
+    pypi/               streamlit / stlite_lib wheel
+    pyodide/            Pyodide v0.26.2 完整发行版 + 所需包 wheel
+    wheelhouse.zip      预置 site-packages（blinker/tenacity/toml/pydeck/plotly/narwhals 等）
+app/                    应用源码（已按 streamlit 1.40 做 API 降级，仅作存档）
+build_static.py         重新构建脚本（在 ../static_build/ 运行）
 ```
+
+> ⚠️ 网站文件必须放在 `site/` 子目录里：Cloudflare 的输出目录若设为仓库根目录，
+> 会把 `.git` 里的 pack 文件（约 50MB）也当资源上传，超出 25 MiB 单文件限制导致部署失败。
 
 - 首次打开需下载约 60–70MB 资产（通常 10–40 秒），之后走浏览器缓存。
 - 页面内的「Streamlit Cloud 备用入口」链接指向原云端版本，两条路互为备份。
@@ -34,7 +40,8 @@ app/                  应用源码（已按 streamlit 1.40 做 API 降级，仅�
    - Project name：`silver-guard-static`
    - Framework preset：**None**
    - Build command：**留空**
-   - Build output directory：**`/`**
+   - Build output directory：**`site`**（⚠️ 必须是 `site`，不能是 `/`，否则会把
+     `.git` 里的 pack 文件当资源上传，超过 25 MiB 限制报 "Asset too large"）
    - 点 **Save and Deploy**，等 1–2 分钟
 3. 得到 `https://silver-guard-static.pages.dev`（Custom domains 里可换名字）
 
@@ -43,21 +50,31 @@ app/                  应用源码（已按 streamlit 1.40 做 API 降级，仅�
 ### 备选：Vercel
 
 https://vercel.com → Add New → Project → Import `silver-guard-static` →
-Framework 选 Other，其余默认 → Deploy。得到 `*.vercel.app`。
+Framework 选 Other，**Root Directory 保持默认 `./`、Build Output Directory 填 `site`**
+→ Deploy。得到 `*.vercel.app`。
 
 ## 本地预览
 
 ```bash
-python -m http.server 8000   # 在 index.html 所在目录执行，打开 http://localhost:8000
+cd site
+python -m http.server 8000   # 打开 http://localhost:8000
 ```
 
 ## 修改应用后重新构建
 
 源码在 `../silver_guard_demo/`（主仓库，保持 streamlit 1.65 新版 API）。
-改完后：
+改完后在 `../static_build/` 运行构建，再把产物拷进本仓库的 `site/`：
 
-```bash
-python build_static.py        # 自动完成 API 降级 + 打 wheelhouse + 生成 index.html
+```powershell
+# 1) 构建（自动完成 API 降级 + 打 wheelhouse + 生成 index.html）
+cd ..\static_build
+python build_static.py
+
+# 2) 同步到部署目录
+cd ..\silver_guard_static
+Copy-Item -Recurse -Force ..\static_build\index.html ..\static_build\vendor ..\static_build\_headers site\ -ErrorAction SilentlyContinue
+
+# 3) 推送（Cloudflare 自动重新部署）
 git add -A && git commit -m "update" && git push
 ```
 
